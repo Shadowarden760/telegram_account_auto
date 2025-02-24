@@ -1,4 +1,5 @@
 .idea
 .venv
 .env
-./telegram_auto_mongo_data
+telegram_auto_mongo_data
+**/__pycache__/
