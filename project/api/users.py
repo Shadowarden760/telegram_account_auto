@@ -1,11 +1,12 @@
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
-from .api_models import (StatusEnum, SendMessageModel, SendMessageModelResponse,
-                        SubscribeChannelModel, SubscribeChannelModelResponse,
-                        CommentMessageModel, CommentMessageModelResponse,
-                        LikeMessageModel, LikeMessageModelResponse,
-                        MessageHistoryModel)
+
+from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelResponse,
+                            SubscribeChannelModel, SubscribeChannelModelResponse,
+                            CommentMessageModel, CommentMessageModelResponse,
+                            LikeMessageModel, LikeMessageModelResponse,
+                            MessageHistoryModel)
 
 router = APIRouter()
 

@@ -8,11 +8,11 @@ load_dotenv()
 
 class Settings(BaseSettings):
     DEBUG: bool = True
-    ADMIN_LOGIN = os.getenv("ADMIN_LOGIN", "default")
-    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "default")
-    SECRET_KEY = os.getenv("SECRET_KEY", "")
-    ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    ADMIN_LOGIN: str = os.getenv("ADMIN_LOGIN", "default")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "default")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

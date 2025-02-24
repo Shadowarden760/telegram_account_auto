@@ -1,7 +1,10 @@
+from typing import Union
+
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from pydantic import BaseModel
 
-from project.config import get_settings
+from config import get_settings
 
 settings = get_settings()
 
@@ -10,17 +13,17 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 
 
-# class TokenData(BaseModel):
-#     user_login: Union[str, None] = None
-#
-#
-# def verify_password(plain_password, hashed_password):
-#     return pwd_context.verify(plain_password, hashed_password)
-#
-#
-# def get_password_hash(password):
-#     return pwd_context.hash(password)
-#
+class TokenData(BaseModel):
+    user_login: Union[str, None] = None
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
 # async def authenticate_admin(login: str, password: str):
 #     # try:
 #     #     admin: Admin = await Admin.get_by_login(login=login)
