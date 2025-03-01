@@ -22,7 +22,7 @@ services:
       - ./project:/usr/scr/app
     command: ./start
     ports:
-      - 8000
+      - "8000"
     env_file:
       - .env
     depends_on:
