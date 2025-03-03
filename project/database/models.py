@@ -21,8 +21,8 @@ class UserRoles(str, Enum):
 
 class UserDbModel(BaseModel):
     username: str = Field(description="user login")
-    user_description: str = Field(description="user description")
     user_hashed_password: str = Field(description="user hashed password")
+    user_description: str = Field(description="user description", default="default user")
     user_role: UserRoles = Field(description="user role", default=UserRoles.operator) 
     active: bool = Field(description="active account flag", default=True)
 

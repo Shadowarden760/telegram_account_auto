@@ -9,9 +9,9 @@ from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelRespon
                             CommentMessageModel, CommentMessageModelResponse,
                             LikeMessageModel, LikeMessageModelResponse,
                             MessageHistoryModel)
-from config import get_settings
+from api.auth_utils import authenticate_user, create_access_token, get_user
 from database.models import UserDbModel
-from utils.auth_utils import authenticate_user, create_access_token, get_user
+from config import get_settings
 
 settings = get_settings()
 
