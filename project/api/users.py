@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Any, Union
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, Body
 from fastapi.security import OAuth2PasswordRequestForm
 
 from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelResponse,
@@ -11,6 +11,7 @@ from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelRespon
                             MessageHistoryModel)
 from api.auth_utils import authenticate_user, create_access_token, get_user
 from database.models import UserDbModel
+from telegram.telegram_client import TelegramAccount
 from config import get_settings
 
 settings = get_settings()
@@ -31,9 +32,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post(path="/send_message", name="users:send_message")
-async def send_message(message: SendMessageModel, user: Union[UserDbModel, None] = Depends(get_user)) -> SendMessageModelResponse:
+async def send_message(message: SendMessageModel = Body(), file: UploadFile = None,
+                       user: Union[UserDbModel, None] = Depends(get_user)) -> SendMessageModelResponse:
     try:
-        return SendMessageModelResponse(status=StatusEnum.success)
+        account = await TelegramAccount().get_client()
+        await account.get_dialogs()
+        item = await account.get_entity(message.chat_id)
+        result = await account.send_message(entity=item, message=message.text_message, file=file.file.read())
+        return SendMessageModelResponse(status=StatusEnum.success, message_id=result.id)
     except Exception as ex:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -43,8 +49,12 @@ async def send_message(message: SendMessageModel, user: Union[UserDbModel, None]
 @router.post(path="/subscribe_channel", name="users:subscribe_channel")
 async def subscribe_channel(subscribe: SubscribeChannelModel, user: Union[UserDbModel, None] = Depends(get_user)) -> SubscribeChannelModelResponse:
     try:
+        account = await TelegramAccount().get_client()
+        await account.get_dialogs()
         if subscribe.channel_id is None and subscribe.channel_name is None:
             raise RuntimeError("you should provide id or name of channel")
+        elif if subscribe.channel_id is not None:
+            item = await account.get_entity(subscribe.channel_id)
         return SubscribeChannelModelResponse(status=StatusEnum.success)
     except Exception as ex:
         raise HTTPException(

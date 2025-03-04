@@ -1,5 +1,6 @@
 .idea
 .venv
 .env
-telegram_auto_mongo_data
 **/__pycache__/
+telegram_auto_mongo_data
+project/client_session.session

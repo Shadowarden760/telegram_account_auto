@@ -1,7 +1,8 @@
+import json
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from database.models import UserRoles
 
@@ -12,13 +13,18 @@ class StatusEnum(str, Enum):
 
 class SendMessageModel(BaseModel):
     chat_id: int = Field(description="chat id for sending message")
-    message: str = Field(description="message for sending")
-    media: Optional[str] = Field(description="url path to media for sending")
+    text_message: str = Field(description="message for sending", default="")
+
+    @classmethod
+    @model_validator(mode="before")
+    def validate_to_json(cls, value):
+        if isinstance(value, str):
+            return cls(**json.loads(value))
+        return value
 
 class SendMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
-    message_id: Optional[str] = Field(description="new message id", default=0)
-    error_text: Optional[str] = Field(description="error description", default="")
+    message_id: Optional[int] = Field(description="new message id", default=0)
 
 class SubscribeChannelModel(BaseModel):
     channel_name: Optional[str] = Field(description="channel name")
