@@ -25,7 +25,6 @@ class SendMessageModel(BaseModel):
 class SendMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
     message_id: Optional[List[int]] = Field(description="new messages ids", default=[])
-    error_text: Optional[str] = Field(description="error text", default="")
 
 class SubscribeChannelModel(BaseModel):
     channel_name: Optional[str] = Field(description="channel name", default=None)
@@ -47,7 +46,7 @@ class CommentMessageModelResponse(BaseModel):
     error_text: Optional[str] = Field(description="error description", default="")
 
 class LikeMessageModel(BaseModel):
-    channel_id: str = Field(description="channel id to like")
+    chat_id: int = Field(description="chat id to like")
     message_id: int = Field(description="message id to like")
 
 class LikeMessageModelResponse(BaseModel):
