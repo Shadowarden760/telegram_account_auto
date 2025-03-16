@@ -10,7 +10,7 @@ from database.models import UserDbModel, UserRoles
 router = APIRouter()
 
 
-@router.get(path="/admin_get_all_users", name="admins:get_all_users")
+@router.get(path="/admins/admin_get_all_users", name="admins:get_all_users", tags=["admins"])
 async def admin_get_all_users(user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
         if user.user_role == UserRoles.admin and user.active:
@@ -25,7 +25,7 @@ async def admin_get_all_users(user: Union[UserDbModel, None] = Depends(get_user)
             detail=f"{ex}"
         )
 
-@router.post(path="/admin_create_user", name="admins:create_user")
+@router.post(path="/admins/admin_create_user", name="admins:create_user", tags=["admins"])
 async def admin_create_user(new_user: AdminInsertUserModel,
                             user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
@@ -41,7 +41,7 @@ async def admin_create_user(new_user: AdminInsertUserModel,
             detail=f"{ex}"
         )
 
-@router.post(path="/admin_update_user", name="admins:update_user")
+@router.post(path="/admins/admin_update_user", name="admins:update_user", tags=["admins"])
 async def admin_update_user(username: str, new_user_data: AdminUpdateUserModel, user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
         if user.user_role == UserRoles.admin and user.active:
@@ -56,7 +56,7 @@ async def admin_update_user(username: str, new_user_data: AdminUpdateUserModel, 
             detail=f"{ex}"
         )
 
-@router.post(path="/admin_delete_user", name="admins:delete_user")
+@router.post(path="/admins/admin_delete_user", name="admins:delete_user", tags=["admins"])
 async def admin_delete_user(username: str, user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
         if user.user_role == UserRoles.admin and user.active:

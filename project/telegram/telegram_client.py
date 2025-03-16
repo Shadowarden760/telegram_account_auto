@@ -16,6 +16,9 @@ class TelegramAccount:
     def create_session(self):
         self.__channel_client.start()
 
+    async def connect_client(self):
+        await self.__channel_client.connect()
+
     async def get_client(self) -> TelegramClient:
         await self.__channel_client.connect()
         return self.__channel_client

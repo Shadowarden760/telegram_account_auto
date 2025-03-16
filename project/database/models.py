@@ -30,7 +30,8 @@ class UserDbModel(BaseModel):
 class MessageDbModel(BaseModel):
     message_id: int = Field(description="message id")
     message_text: str = Field(description="message text")
-    message_author_id: str = Field(description="author of message")
+    sender_id: str = Field(description="author of message")
+    recipient_id: str = Field(description="recipient of message")
     created_at: str = Field(description="time of message creation", default=datetime.datetime.now())
 
 

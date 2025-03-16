@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, List
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -12,11 +12,11 @@ class StatusEnum(str, Enum):
     failure = "failure"
 
 class SendMessageModel(BaseModel):
-    chat_id: int = Field(description="chat id for sending message")
+    chat_id: int = Field(description="chat id for sending message", default=0)
     text_message: str = Field(description="message for sending", default="")
 
-    @classmethod
     @model_validator(mode="before")
+    @classmethod
     def validate_to_json(cls, value):
         if isinstance(value, str):
             return cls(**json.loads(value))
@@ -24,11 +24,13 @@ class SendMessageModel(BaseModel):
 
 class SendMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
-    message_id: Optional[int] = Field(description="new message id", default=0)
+    message_id: Optional[List[int]] = Field(description="new messages ids", default=[])
+    error_text: Optional[str] = Field(description="error text", default="")
 
 class SubscribeChannelModel(BaseModel):
     channel_name: Optional[str] = Field(description="channel name")
     channel_id: Optional[str] = Field(description="channel id")
+    subscribe: bool = Field(description="subscribe or not")
 
 class SubscribeChannelModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
@@ -52,10 +54,6 @@ class LikeMessageModel(BaseModel):
 class LikeMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
     error_text: Optional[str] = Field(description="error description", default="")
-
-class MessageHistoryModel(BaseModel):
-    limit: int = Field(description="message limit", default=10)
-    offset: Optional[int] = Field(description="count of last messages to ignore")
 
 class AdminInsertUserModel(BaseModel):
     new_username: str = Field(description="new username")

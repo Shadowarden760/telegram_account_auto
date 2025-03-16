@@ -2,12 +2,11 @@ from typing import Union, List
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from config import get_settings
 from api.api_models import AdminInsertUserModel, AdminUpdateUserModel
-from database.models import UserDbModel, UserRoles, ActionsDbModel
+from config import get_settings
+from database.models import UserDbModel, UserRoles, ActionsDbModel, MessageDbModel
 
 settings = get_settings()
-
 
 class __Singleton(object):
     _instance = None
@@ -17,7 +16,7 @@ class __Singleton(object):
             cls._instance = object.__new__(cls, *args, **kwargs)
         return cls._instance
 
-class AsyncMongoClient(__Singleton):
+class AsyncMongoClient:
 
     def __init__(self):
         self.client = AsyncIOMotorClient("mongodb://user:pass@mongo:27017")
@@ -77,8 +76,11 @@ class AsyncMongoClient(__Singleton):
                 active=existing_user_model.active if user_new_data.updated_user_active is None else user_new_data.updated_user_active
             )
             result = await self.client.telegram_db.users.replace_one({"_id": user["_id"]}, updated_user.model_dump())
-            print(result)
             return str(result.upserted_id)
+
+    async def get_action_history(self, limit: int, offset: int):
+        result = await self.client.telegram_db.messages.find().to_list(None)
+        return result[offset:][:limit]
 
     async def delete_user_by_admin(self, username: str) -> int:
         if username == settings.ADMIN_LOGIN:
@@ -88,5 +90,8 @@ class AsyncMongoClient(__Singleton):
         print(result)
         return result.deleted_count
 
-    async def safe_log_action(self, action: ActionsDbModel):
-        await self.client.telegram_db.actions.insert_one(action.model_dump())
+    async def safe_message(self, message_action: MessageDbModel):
+        await self.client.telegram_db.messages.insert_one(message_action.model_dump())
+
+    async def safe_log_action(self, log_action: ActionsDbModel):
+        await self.client.telegram_db.actions.insert_one(log_action.model_dump())
