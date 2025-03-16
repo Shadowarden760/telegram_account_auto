@@ -78,16 +78,16 @@ class AsyncMongoClient:
             result = await self.client.telegram_db.users.replace_one({"_id": user["_id"]}, updated_user.model_dump())
             return str(result.upserted_id)
 
-    async def get_action_history(self, limit: int, offset: int):
+    async def get_action_history(self, limit: int, offset: int) -> List[MessageDbModel]:
         result = await self.client.telegram_db.messages.find().to_list(None)
-        return result[offset:][:limit]
+        filtered_result = result[offset:][:limit]
+        return [MessageDbModel.model_validate(item) for item in filtered_result]
 
     async def delete_user_by_admin(self, username: str) -> int:
         if username == settings.ADMIN_LOGIN:
             return 0
         query = {"username": username}
         result = await self.client.telegram_db.users.delete_one(query)
-        print(result)
         return result.deleted_count
 
     async def safe_message(self, message_action: MessageDbModel):

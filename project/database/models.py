@@ -32,11 +32,11 @@ class MessageDbModel(BaseModel):
     message_text: str = Field(description="message text")
     sender_id: str = Field(description="author of message")
     recipient_id: str = Field(description="recipient of message")
-    created_at: str = Field(description="time of message creation", default=datetime.datetime.now())
+    created_at: datetime.datetime = Field(description="time of message creation", default=datetime.datetime.now())
 
 
 class ActionsDbModel(BaseModel):
     action_type: ActionsEnum = Field(description="action type")
     action_data: dict = Field(description="action data")
     action_status: bool = Field(description="if action was successful")
-    action_time: str = Field(description="action time", default=datetime.datetime.now())
+    action_time: datetime.datetime = Field(description="action time", default=datetime.datetime.now())

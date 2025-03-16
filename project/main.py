@@ -3,13 +3,14 @@ import asyncio
 import uvicorn
 from fastapi import FastAPI
 
-from api import users, admins
+from api import users, admins, default
 from config import get_settings
 from database.database import AsyncMongoClient
 
 settings = get_settings()
 
 app = FastAPI()
+app.include_router(router=default.router)
 app.include_router(router=users.router)
 app.include_router(router=admins.router)
 

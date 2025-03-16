@@ -1,17 +1,15 @@
-from datetime import timedelta
 from typing import Any, Union, List
 
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, Body
-from fastapi.security import OAuth2PasswordRequestForm
-from telethon import TelegramClient
+from telethon import TelegramClient, utils
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
-from telethon.tl.types import InputChannel, DocumentAttributeFilename
+from telethon.tl.types import InputChannel, DocumentAttributeFilename, PeerChannel
 
 from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelResponse,
                             SubscribeChannelModel, SubscribeChannelModelResponse,
                             CommentMessageModel, CommentMessageModelResponse,
-                            LikeMessageModel, LikeMessageModelResponse)
-from api.auth_utils import authenticate_user, create_access_token, get_user
+                            LikeMessageModel, LikeMessageModelResponse, GetHistoryModelResponse)
+from api.auth_utils import get_user
 from config import get_settings
 from database.database import AsyncMongoClient
 from database.models import UserDbModel, ActionsDbModel, ActionsEnum, MessageDbModel
@@ -20,19 +18,6 @@ from telegram.telegram_client import TelegramAccount
 settings = get_settings()
 
 router = APIRouter()
-
-@router.post("/login", name="login", tags=["default"])
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user: Union[UserDbModel, None] = await authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
-    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post(path="/users/send_message", name="users:send_message", tags=["users"])
 async def send_message(message: SendMessageModel = Body(), upload_files: List[UploadFile] = None,
@@ -84,43 +69,45 @@ async def send_message(message: SendMessageModel = Body(), upload_files: List[Up
         await account.disconnect()
 
 @router.post(path="/users/subscribe_channel", name="users:subscribe_channel", tags=["users"])
-async def subscribe_channel(subscribe: SubscribeChannelModel,
+async def subscribe_channel(subscribe_data: SubscribeChannelModel,
                             user: Union[UserDbModel, None] = Depends(get_user)) -> SubscribeChannelModelResponse:
     account = await TelegramAccount().get_client()
     db = AsyncMongoClient()
     try:
         await account.get_dialogs()
-        result = False
 
-        if subscribe.channel_id is None and subscribe.channel_name is None:
+        if subscribe_data.channel_id is None and subscribe_data.channel_name is None:
             raise RuntimeError("you should provide id or name of channel")
-        elif subscribe.channel_id is not None:
-            item = await account.get_input_entity(subscribe.channel_id)
-            channel = InputChannel(item.channel_id, item.access_hash)
-            result = await __subscribe_channel(account=account, channel=channel, subscribe=subscribe.subscribe)
-        elif subscribe.channel_name is not None:
-            item = await account.get_input_entity(subscribe.channel_name)
-            channel = InputChannel(item.channel_id, item.access_hash)
-            result = await __subscribe_channel(account=account, channel=channel, subscribe=subscribe.subscribe)
+        elif subscribe_data.channel_name is not None:
+            item = await account.get_entity(subscribe_data.channel_name)
+            channel = InputChannel(item.id, item.access_hash)
+        else:
+            item = await account.get_entity(PeerChannel(channel_id=subscribe_data.channel_id))
+            channel = InputChannel(item.id, item.access_hash)
 
+        result = await __subscribe_channel(account=account, channel=channel, subscribe=subscribe_data.subscribe_flag)
         if result:
             action = ActionsDbModel(
                 action_status=True,
                 action_type=ActionsEnum.subscribe_channel,
-                action_data=result
+                action_data={"channel_name": item.username, "channel_id": item.id,
+                             "result": result, "subscribe": subscribe_data.subscribe_flag}
             )
             await db.safe_log_action(log_action=action)
             return SubscribeChannelModelResponse(
-                status=StatusEnum.success, channel_id=str(channel.channel_id),channel_name=subscribe.channel_name
+                status=StatusEnum.success, channel_id=str(item.id),channel_name=item.username
             )
         else:
             action = ActionsDbModel(
                 action_status=False,
                 action_type=ActionsEnum.subscribe_channel,
-                action_data=result
+                action_data={"channel_name": item.username, "channel_id": item.id,
+                             "result": result, "subscribe": subscribe_data.subscribe_flag}
             )
             await db.safe_log_action(log_action=action)
-            return SubscribeChannelModelResponse(status=StatusEnum.failure)
+            return SubscribeChannelModelResponse(
+                status=StatusEnum.failure, channel_id=str(item.id), channel_name=item.username
+            )
     except Exception as ex:
         action = ActionsDbModel(
             action_status=False,
@@ -166,7 +153,8 @@ async def enable_2fa(user: Union[UserDbModel, None] = Depends(get_user)) -> Any:
         )
 
 @router.get(path="/users/history", name="users:history", tags=["users"])
-async def get_history(offset: int = 0, limit: int = 10, user: Union[UserDbModel, None] = Depends(get_user)) -> dict:
+async def get_history(offset: int = 0, limit: int = 10,
+                      user: Union[UserDbModel, None] = Depends(get_user)) -> GetHistoryModelResponse:
     db = AsyncMongoClient()
     try:
         result = await db.get_action_history(offset=offset, limit=limit)
@@ -176,7 +164,7 @@ async def get_history(offset: int = 0, limit: int = 10, user: Union[UserDbModel,
             action_status=True
         )
         await db.safe_log_action(log_action=action)
-        return {"status": "ok", "data": str(result)}
+        return GetHistoryModelResponse(status=StatusEnum.success, data=result)
     except Exception as ex:
         action = ActionsDbModel(
             action_type=ActionsEnum.get_history,

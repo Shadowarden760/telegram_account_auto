@@ -4,7 +4,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel, Field, model_validator
 
-from database.models import UserRoles
+from database.models import UserRoles, MessageDbModel
 
 
 class StatusEnum(str, Enum):
@@ -28,15 +28,14 @@ class SendMessageModelResponse(BaseModel):
     error_text: Optional[str] = Field(description="error text", default="")
 
 class SubscribeChannelModel(BaseModel):
-    channel_name: Optional[str] = Field(description="channel name")
-    channel_id: Optional[str] = Field(description="channel id")
-    subscribe: bool = Field(description="subscribe or not")
+    channel_name: Optional[str] = Field(description="channel name", default=None)
+    channel_id: Optional[int] = Field(description="channel id", default=None)
+    subscribe_flag: bool = Field(description="subscribe or not")
 
 class SubscribeChannelModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
     channel_id: str = Field(description="channel id", default="")
     channel_name: str = Field(description="channel name", default="")
-    error_text: Optional[str] = Field(description="error description", default="")
 
 class CommentMessageModel(BaseModel):
     channel_id: str = Field(description="channel id to comment")
@@ -54,6 +53,10 @@ class LikeMessageModel(BaseModel):
 class LikeMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
     error_text: Optional[str] = Field(description="error description", default="")
+
+class GetHistoryModelResponse(BaseModel):
+    status: StatusEnum = Field(description="operation status")
+    data: List[MessageDbModel] = Field(description="history of messaging", default=[])
 
 class AdminInsertUserModel(BaseModel):
     new_username: str = Field(description="new username")
