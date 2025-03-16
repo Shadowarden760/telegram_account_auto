@@ -2,11 +2,10 @@ import os
 from typing import Union, List
 
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, Body
-from telethon import TelegramClient, types
-from telethon.tl.custom.file import File
+from telethon import TelegramClient
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
 from telethon.tl.functions.messages import SendReactionRequest
-from telethon.tl.types import InputChannel, DocumentAttributeFilename, PeerChannel, ReactionEmoji, InputFile
+from telethon.tl.types import InputChannel, PeerChannel, ReactionEmoji
 
 from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelResponse,
                             SubscribeChannelModel, SubscribeChannelModelResponse,
