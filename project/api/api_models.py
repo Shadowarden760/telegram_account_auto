@@ -14,6 +14,7 @@ class StatusEnum(str, Enum):
 class SendMessageModel(BaseModel):
     chat_id: int = Field(description="chat id for sending message", default=0)
     text_message: str = Field(description="message for sending", default="")
+    if_channel: bool = Field(description="channel or not", default=False)
 
     @model_validator(mode="before")
     @classmethod
@@ -37,7 +38,7 @@ class SubscribeChannelModelResponse(BaseModel):
     channel_name: str = Field(description="channel name", default="")
 
 class CommentMessageModel(BaseModel):
-    channel_id: str = Field(description="channel id to comment")
+    channel_id: int = Field(description="channel id to comment")
     message_id: int = Field(description="message id to comment")
     comment: str = Field(description="text comment to message")
 
@@ -48,10 +49,18 @@ class CommentMessageModelResponse(BaseModel):
 class LikeMessageModel(BaseModel):
     chat_id: int = Field(description="chat id to like")
     message_id: int = Field(description="message id to like")
+    if_channel: bool = Field(description="channel or not", default=False)
 
 class LikeMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
     error_text: Optional[str] = Field(description="error description", default="")
+
+class TwoFAModel(BaseModel):
+    current_password: Optional[str] = Field(description="current password, ignore if 2fa not activated", default=None)
+    new_password: Optional[str] = Field(description="new password, ignore to reset 2fa", default=None)
+
+class TwoFAModelResponse(BaseModel):
+    status: StatusEnum = Field(description="operation status")
 
 class GetHistoryModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
