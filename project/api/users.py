@@ -1,10 +1,12 @@
+import os
 from typing import Union, List
 
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, Body
-from telethon import TelegramClient
+from telethon import TelegramClient, types
+from telethon.tl.custom.file import File
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
-from telethon.tl.functions.messages import SendReactionRequest, GetHistoryRequest
-from telethon.tl.types import InputChannel, DocumentAttributeFilename, PeerChannel, ReactionEmoji
+from telethon.tl.functions.messages import SendReactionRequest
+from telethon.tl.types import InputChannel, DocumentAttributeFilename, PeerChannel, ReactionEmoji, InputFile
 
 from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelResponse,
                             SubscribeChannelModel, SubscribeChannelModelResponse,
@@ -30,11 +32,15 @@ async def send_message(message: SendMessageModel = Body(), upload_files: List[Up
         await account.get_dialogs()
         item = await account.get_entity(message.chat_id)
         if upload_files is not None:
-            files_bytes = [await file.read() for file in upload_files]
-            file_names = [DocumentAttributeFilename(file.filename) for file in upload_files]
+            file_names = [f"temp/{file.filename}" for file in upload_files]
+            for file in upload_files:
+                with open(f"temp/{file.filename}", "wb") as temp_file:
+                    temp_file.write(file.file.read())
             caption = ["" for _ in upload_files]
             caption[-1] = message.text_message
-            result = await account.send_file(entity=item, caption=caption, file=files_bytes)
+            result = await account.send_file(entity=item, caption=caption, file=file_names)
+            for file in file_names:
+                os.remove(file)
             action_data = {}
             for i in range(0, len(result)):
                 action_data[f"{i}"] = result[i].to_dict()
