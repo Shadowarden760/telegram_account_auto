@@ -6,5 +6,5 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 if __name__ == "__main__":
-    account = TelegramAccount(session_path="client_session")
+    account = TelegramAccount(session_path="sessions/client_session")
     account.create_session()

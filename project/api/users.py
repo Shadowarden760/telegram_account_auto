@@ -22,7 +22,9 @@ settings = get_settings()
 
 router = APIRouter()
 
-@router.post(path="/users/send_message", name="users:send_message", tags=["users"])
+@router.post(path="/users/send_message", name="users:send_message", tags=["users"],
+             description="Send text message with file or files of different formats(images, videos and others)"
+             )
 async def send_message(message: SendMessageModel = Body(), upload_files: List[UploadFile] = None,
                        user: Union[UserDbModel, None] = Depends(get_user)) -> SendMessageModelResponse:
     account = await TelegramAccount().get_client()
@@ -31,10 +33,10 @@ async def send_message(message: SendMessageModel = Body(), upload_files: List[Up
         await account.get_dialogs()
         item = await account.get_entity(message.chat_id)
         if upload_files is not None:
-            file_names = [f"temp/{file.filename}" for file in upload_files]
-            for file in upload_files:
-                with open(f"temp/{file.filename}", "wb") as temp_file:
-                    temp_file.write(file.file.read())
+            file_names = [f"temp/{user.username}/{file.filename}" for file in upload_files]
+            for i in range (0, len(upload_files)):
+                with open(file_names[i], "wb") as temp_file:
+                    temp_file.write(upload_files[i].file.read())
             caption = ["" for _ in upload_files]
             caption[-1] = message.text_message
             result = await account.send_file(entity=item, caption=caption, file=file_names)
@@ -79,7 +81,9 @@ async def send_message(message: SendMessageModel = Body(), upload_files: List[Up
     finally:
         await account.disconnect()
 
-@router.post(path="/users/subscribe_channel", name="users:subscribe_channel", tags=["users"])
+@router.post(path="/users/subscribe_channel", name="users:subscribe_channel", tags=["users"],
+             description="Subscribe channel by name (t.me/something) or id"
+             )
 async def subscribe_channel(subscribe_data: SubscribeChannelModel,
                             user: Union[UserDbModel, None] = Depends(get_user)) -> SubscribeChannelModelResponse:
     account = await TelegramAccount().get_client()
@@ -133,7 +137,9 @@ async def subscribe_channel(subscribe_data: SubscribeChannelModel,
     finally:
         await account.disconnect()
 
-@router.post(path="/users/comment_message", name="users:comment_message", tags=["users"])
+@router.post(path="/users/comment_message", name="users:comment_message", tags=["users"],
+             description="Comment channel message with plain text"
+             )
 async def comment_message(comment_data: CommentMessageModel,
                           user: Union[UserDbModel, None] = Depends(get_user)) -> CommentMessageModelResponse:
     account = await TelegramAccount().get_client()
@@ -163,18 +169,20 @@ async def comment_message(comment_data: CommentMessageModel,
     finally:
         await account.disconnect()
 
-@router.post(path="/users/like_message", name="users:like_message", tags=["users"])
-async def like_message(like: LikeMessageModel, user: Union[UserDbModel, None] = Depends(get_user)) -> LikeMessageModelResponse:
+@router.post(path="/users/like_message", name="users:like_message", tags=["users"],
+             description="Like message with emoticon"
+             )
+async def like_message(like_data: LikeMessageModel, user: Union[UserDbModel, None] = Depends(get_user)) -> LikeMessageModelResponse:
     account = await TelegramAccount().get_client()
     db = AsyncMongoClient()
     try:
         await account.get_dialogs()
-        item = await account.get_entity(like.chat_id)
-        await __sent_reaction(account=account, message_id=like.message_id, peer=item)
+        item = await account.get_entity(like_data.chat_id)
+        await __sent_reaction(account=account, message_id=like_data.message_id, peer=item, emoticon=like_data.emoticon)
         action = ActionsDbModel(
             action_status=True,
             action_type=ActionsEnum.like_message,
-            action_data={"chat_id": like.chat_id, "message_id": like.message_id}
+            action_data={"chat_id": like_data.chat_id, "message_id": like_data.message_id}
         )
         await db.safe_log_action(log_action=action)
         return LikeMessageModelResponse(status=StatusEnum.success)
@@ -192,7 +200,9 @@ async def like_message(like: LikeMessageModel, user: Union[UserDbModel, None] = 
     finally:
         await account.disconnect()
 
-@router.post(path="/users/enable_2fa", name="users:enable_2fa", tags=["users"])
+@router.post(path="/users/enable_2fa", name="users:enable_2fa", tags=["users"],
+             description="Enable/disable/change two-factor authentication"
+             )
 async def enable_2fa(twofa_data: TwoFAModel, user: Union[UserDbModel, None] = Depends(get_user)) -> TwoFAModelResponse:
     account = await TelegramAccount().get_client()
     db = AsyncMongoClient()
@@ -219,7 +229,9 @@ async def enable_2fa(twofa_data: TwoFAModel, user: Union[UserDbModel, None] = De
     finally:
         await account.disconnect()
 
-@router.get(path="/users/history", name="users:history", tags=["users"])
+@router.get(path="/users/history", name="users:history", tags=["users"],
+            description="Get history of operators' messages"
+            )
 async def get_history(offset: int = 0, limit: int = 10,
                       user: Union[UserDbModel, None] = Depends(get_user)) -> GetHistoryModelResponse:
     db = AsyncMongoClient()
@@ -244,10 +256,14 @@ async def get_history(offset: int = 0, limit: int = 10,
             detail=f"{ex}"
         )
 
-@router.get(path="/users/get_dialogs", name="users:dialogs", tags=["users"])
+@router.get(path="/users/get_dialogs", name="users:dialogs", tags=["users"],
+            description="Get full information of session dialogs"
+            )
 async def get_dialogs(user: Union[UserDbModel, None] = Depends(get_user)):
     account = await TelegramAccount().get_client()
-    return str(await account.get_dialogs())
+    dialogs_data = str(await account.get_dialogs())
+    await account.disconnect()
+    return dialogs_data
 
 async def __subscribe_channel(account: TelegramClient, channel: InputChannel, subscribe: bool) -> bool:
     if subscribe:
@@ -256,8 +272,8 @@ async def __subscribe_channel(account: TelegramClient, channel: InputChannel, su
         await account(LeaveChannelRequest(channel))
     return True
 
-async def __sent_reaction(account: TelegramClient, message_id: int, peer) -> bool:
-    await account(SendReactionRequest(peer=peer, msg_id=message_id, reaction=[ReactionEmoji(emoticon="👍")]))
+async def __sent_reaction(account: TelegramClient, message_id: int, peer, emoticon: str) -> bool:
+    await account(SendReactionRequest(peer=peer, msg_id=message_id, reaction=[ReactionEmoji(emoticon=emoticon)]))
     return True
 
 def __get_data_from_message_object(message, if_channel: bool, sender_username: str) -> MessageDbModel:

@@ -79,8 +79,9 @@ class AsyncMongoClient:
             return str(result.upserted_id)
 
     async def get_action_history(self, limit: int, offset: int) -> List[MessageDbModel]:
-        result = await self.client.telegram_db.messages.find().to_list(None)
+        result: list = await self.client.telegram_db.messages.find().to_list(None)
         filtered_result = result[offset:][:limit]
+        filtered_result.reverse()
         return [MessageDbModel.model_validate(item) for item in filtered_result]
 
     async def delete_user_by_admin(self, username: str) -> int:

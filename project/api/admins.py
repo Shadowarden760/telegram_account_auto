@@ -10,7 +10,9 @@ from database.models import UserDbModel, UserRoles
 router = APIRouter()
 
 
-@router.get(path="/admins/admin_get_all_users", name="admins:get_all_users", tags=["admins"])
+@router.get(path="/admins/admin_get_all_users", name="admins:get_all_users", tags=["admins"],
+            description="Get all users (operators and admins) information"
+            )
 async def admin_get_all_users(user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
         if user.user_role == UserRoles.admin and user.active:
@@ -25,7 +27,9 @@ async def admin_get_all_users(user: Union[UserDbModel, None] = Depends(get_user)
             detail=f"{ex}"
         )
 
-@router.post(path="/admins/admin_create_user", name="admins:create_user", tags=["admins"])
+@router.post(path="/admins/admin_create_user", name="admins:create_user", tags=["admins"],
+             description="Create operator or admin"
+             )
 async def admin_create_user(new_user: AdminInsertUserModel,
                             user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
@@ -41,7 +45,9 @@ async def admin_create_user(new_user: AdminInsertUserModel,
             detail=f"{ex}"
         )
 
-@router.post(path="/admins/admin_update_user", name="admins:update_user", tags=["admins"])
+@router.post(path="/admins/admin_update_user", name="admins:update_user", tags=["admins"],
+             description="Update operator or admin information including changing active status"
+             )
 async def admin_update_user(username: str, new_user_data: AdminUpdateUserModel, user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
         if user.user_role == UserRoles.admin and user.active:
@@ -56,7 +62,9 @@ async def admin_update_user(username: str, new_user_data: AdminUpdateUserModel, 
             detail=f"{ex}"
         )
 
-@router.post(path="/admins/admin_delete_user", name="admins:delete_user", tags=["admins"])
+@router.post(path="/admins/admin_delete_user", name="admins:delete_user", tags=["admins"],
+             description="Delete operators and admin (cant delete main admin, only with some update magic <3)"
+             )
 async def admin_delete_user(username: str, user: Union[UserDbModel, None] = Depends(get_user)) -> AdminActionResponse:
     try:
         if user.user_role == UserRoles.admin and user.active:

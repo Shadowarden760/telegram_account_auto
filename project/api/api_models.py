@@ -44,16 +44,15 @@ class CommentMessageModel(BaseModel):
 
 class CommentMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
-    error_text: Optional[str] = Field(description="error description", default="")
 
 class LikeMessageModel(BaseModel):
     chat_id: int = Field(description="chat id to like")
     message_id: int = Field(description="message id to like")
+    emoticon: str = Field(description="reaction icon", default="👍")
     if_channel: bool = Field(description="channel or not", default=False)
 
 class LikeMessageModelResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
-    error_text: Optional[str] = Field(description="error description", default="")
 
 class TwoFAModel(BaseModel):
     current_password: Optional[str] = Field(description="current password, ignore if 2fa not activated", default=None)

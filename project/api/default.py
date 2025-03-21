@@ -12,7 +12,9 @@ settings = get_settings()
 
 router = APIRouter()
 
-@router.post("/login", name="login", tags=["default"])
+@router.post(path="/login", name="login", tags=["default"],
+             description="Get access token by username and password"
+             )
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user: Union[UserDbModel, None] = await authenticate_user(form_data.username, form_data.password)
     if not user:

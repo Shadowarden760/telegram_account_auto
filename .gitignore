@@ -3,4 +3,5 @@
 .env
 **/__pycache__/
 telegram_auto_mongo_data
-project/client_session.session
+project/sessions
+project/temp
