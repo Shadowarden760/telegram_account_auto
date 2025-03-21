@@ -13,12 +13,9 @@ from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelRespon
                             LikeMessageModel, LikeMessageModelResponse, GetHistoryModelResponse, TwoFAModelResponse,
                             TwoFAModel)
 from api.auth_utils import get_user
-from config import get_settings
 from database.database import AsyncMongoClient
 from database.models import UserDbModel, ActionsDbModel, ActionsEnum, MessageDbModel
 from telegram.telegram_client import TelegramAccount
-
-settings = get_settings()
 
 router = APIRouter()
 
@@ -27,7 +24,7 @@ router = APIRouter()
              )
 async def send_message(message: SendMessageModel = Body(), upload_files: List[UploadFile] = None,
                        user: Union[UserDbModel, None] = Depends(get_user)) -> SendMessageModelResponse:
-    account = await TelegramAccount().get_client()
+    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
     try:
         await account.get_dialogs()
@@ -86,7 +83,7 @@ async def send_message(message: SendMessageModel = Body(), upload_files: List[Up
              )
 async def subscribe_channel(subscribe_data: SubscribeChannelModel,
                             user: Union[UserDbModel, None] = Depends(get_user)) -> SubscribeChannelModelResponse:
-    account = await TelegramAccount().get_client()
+    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
     try:
         await account.get_dialogs()
@@ -142,7 +139,7 @@ async def subscribe_channel(subscribe_data: SubscribeChannelModel,
              )
 async def comment_message(comment_data: CommentMessageModel,
                           user: Union[UserDbModel, None] = Depends(get_user)) -> CommentMessageModelResponse:
-    account = await TelegramAccount().get_client()
+    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
     try:
         await account.get_dialogs()
@@ -173,7 +170,7 @@ async def comment_message(comment_data: CommentMessageModel,
              description="Like message with emoticon"
              )
 async def like_message(like_data: LikeMessageModel, user: Union[UserDbModel, None] = Depends(get_user)) -> LikeMessageModelResponse:
-    account = await TelegramAccount().get_client()
+    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
     try:
         await account.get_dialogs()
@@ -204,7 +201,7 @@ async def like_message(like_data: LikeMessageModel, user: Union[UserDbModel, Non
              description="Enable/disable/change two-factor authentication"
              )
 async def enable_2fa(twofa_data: TwoFAModel, user: Union[UserDbModel, None] = Depends(get_user)) -> TwoFAModelResponse:
-    account = await TelegramAccount().get_client()
+    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
     try:
         result = await account.edit_2fa(current_password=twofa_data.current_password, new_password=twofa_data.new_password)
@@ -260,7 +257,7 @@ async def get_history(offset: int = 0, limit: int = 10,
             description="Get full information of session dialogs"
             )
 async def get_dialogs(user: Union[UserDbModel, None] = Depends(get_user)):
-    account = await TelegramAccount().get_client()
+    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     dialogs_data = str(await account.get_dialogs())
     await account.disconnect()
     return dialogs_data

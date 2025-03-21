@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from telethon import TelegramClient
 
 from config import get_settings
@@ -6,9 +8,9 @@ settings = get_settings()
 
 class TelegramAccount:
 
-    def __init__(self, session_path: str = settings.TELEGRAM_SESSION_PATH):
+    def __init__(self, session_file_name: str):
         self.__channel_client = TelegramClient(
-            session=session_path,
+            session= str(Path(f"./sessions/{session_file_name}").absolute()),
             api_id=settings.TELEGRAM_API_ID,
             api_hash=settings.TELEGRAM_API_HASH
         )

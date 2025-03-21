@@ -68,6 +68,7 @@ class GetHistoryModelResponse(BaseModel):
 class AdminInsertUserModel(BaseModel):
     new_username: str = Field(description="new username")
     new_user_password: str = Field(description="new password")
+    new_user_session: str = Field(description="user session")
     new_user_description: str = Field(description="new description", default="default operator")
     new_user_role: UserRoles = Field(description="new user role", default=UserRoles.operator)
     new_user_active: bool = Field(description="if user active or disabled", default=True)
@@ -75,6 +76,7 @@ class AdminInsertUserModel(BaseModel):
 class AdminUpdateUserModel(BaseModel):
     updated_username: Optional[str] = Field(description="updated username", default=None)
     updated_user_password: Optional[str] = Field(description="updated password", default=None)
+    updated_user_session: Optional[str] = Field(description="updated user session path", default=None)
     updated_user_description: Optional[str] = Field(description="updated description", default=None)
     updated_user_role: Optional[UserRoles] = Field(description="updated user role", default=None)
     updated_user_active: Optional[bool] = Field(description="if user active or disabled", default=None)

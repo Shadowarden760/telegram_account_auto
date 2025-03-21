@@ -29,6 +29,7 @@ class AsyncMongoClient:
             admin = UserDbModel(
                 username=settings.ADMIN_LOGIN,
                 user_description="admin",
+                user_session="",
                 user_role=UserRoles.admin,
                 user_hashed_password=get_password_hash(settings.ADMIN_PASSWORD)
             )
@@ -43,7 +44,6 @@ class AsyncMongoClient:
         users = await self.client.telegram_db.users.find().to_list(None)
         return [UserDbModel.model_validate(user) for user in users]
 
-
     async def create_user_by_admin(self, new_user: AdminInsertUserModel) -> Union[str, None]:
         from api.auth_utils import get_password_hash
         query = {"username": new_user.new_username}
@@ -52,6 +52,7 @@ class AsyncMongoClient:
             new_db_user = UserDbModel(
                 username=new_user.new_username,
                 user_hashed_password=get_password_hash(new_user.new_user_password),
+                user_session=new_user.new_user_session,
                 user_description=new_user.new_user_description,
                 user_role=new_user.new_user_role,
                 active=new_user.new_user_active
@@ -71,6 +72,7 @@ class AsyncMongoClient:
             updated_user = UserDbModel(
                 username= existing_user_model.username if user_new_data.updated_username is None else user_new_data.updated_username,
                 user_hashed_password=existing_user_model.user_hashed_password if user_new_data.updated_user_password is None else get_password_hash(user_new_data.updated_user_password),
+                user_session=existing_user_model.user_session if user_new_data.updated_user_session is None else user_new_data.updated_user_session,
                 user_description=existing_user_model.user_description if user_new_data.updated_user_description is None else user_new_data.updated_user_description,
                 user_role=existing_user_model.user_role if user_new_data.updated_user_role is None else user_new_data.updated_user_role,
                 active=existing_user_model.active if user_new_data.updated_user_active is None else user_new_data.updated_user_active
