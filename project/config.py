@@ -13,8 +13,6 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    TELEGRAM_API_ID: int = os.getenv("TELEGRAM_API_ID")
-    TELEGRAM_API_HASH: str = os.getenv("TELEGRAM_API_HASH")
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

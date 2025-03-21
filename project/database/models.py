@@ -22,11 +22,15 @@ class UserRoles(str, Enum):
 class UserDbModel(BaseModel):
     username: str = Field(description="user login")
     user_hashed_password: str = Field(description="user hashed password")
-    user_session: str = Field(description="user session path")
+    user_session_id: str = Field(description="user session id")
     user_description: str = Field(description="user description", default="default user")
     user_role: UserRoles = Field(description="user role", default=UserRoles.operator)
     active: bool = Field(description="active account flag", default=True)
 
+class SessionDbModel(BaseModel):
+    session_file_name: str = Field(description="session file name")
+    telegram_api_id: int = Field(description="telegram api id")
+    telegram_api_hash: str = Field(description="telegram api hash")
 
 class MessageDbModel(BaseModel):
     message_id: int = Field(description="message id")

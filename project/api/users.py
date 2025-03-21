@@ -14,7 +14,7 @@ from api.api_models import (StatusEnum, SendMessageModel, SendMessageModelRespon
                             TwoFAModel)
 from api.auth_utils import get_user
 from database.database import AsyncMongoClient
-from database.models import UserDbModel, ActionsDbModel, ActionsEnum, MessageDbModel
+from database.models import UserDbModel, ActionsDbModel, ActionsEnum, MessageDbModel, SessionDbModel
 from telegram.telegram_client import TelegramAccount
 
 router = APIRouter()
@@ -24,13 +24,16 @@ router = APIRouter()
              )
 async def send_message(message: SendMessageModel = Body(), upload_files: List[UploadFile] = None,
                        user: Union[UserDbModel, None] = Depends(get_user)) -> SendMessageModelResponse:
-    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
+    session = SessionDbModel.model_validate(await db.get_session_by_id(user.user_session_id))
+    account = await TelegramAccount(session_file_name=session.session_file_name,
+                                    app_id=session.telegram_api_id,
+                                    app_hash=session.telegram_api_hash).get_client()
     try:
         await account.get_dialogs()
         item = await account.get_entity(message.chat_id)
         if upload_files is not None:
-            file_names = [f"temp/{user.username}/{file.filename}" for file in upload_files]
+            file_names = [f"temp/{file.filename}" for file in upload_files]
             for i in range (0, len(upload_files)):
                 with open(file_names[i], "wb") as temp_file:
                     temp_file.write(upload_files[i].file.read())
@@ -83,8 +86,11 @@ async def send_message(message: SendMessageModel = Body(), upload_files: List[Up
              )
 async def subscribe_channel(subscribe_data: SubscribeChannelModel,
                             user: Union[UserDbModel, None] = Depends(get_user)) -> SubscribeChannelModelResponse:
-    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
+    session = SessionDbModel.model_validate(await db.get_session_by_id(user.user_session_id))
+    account = await TelegramAccount(session_file_name=session.session_file_name,
+                                    app_id=session.telegram_api_id,
+                                    app_hash=session.telegram_api_hash).get_client()
     try:
         await account.get_dialogs()
 
@@ -139,8 +145,11 @@ async def subscribe_channel(subscribe_data: SubscribeChannelModel,
              )
 async def comment_message(comment_data: CommentMessageModel,
                           user: Union[UserDbModel, None] = Depends(get_user)) -> CommentMessageModelResponse:
-    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
+    session = SessionDbModel.model_validate(await db.get_session_by_id(user.user_session_id))
+    account = await TelegramAccount(session_file_name=session.session_file_name,
+                                    app_id=session.telegram_api_id,
+                                    app_hash=session.telegram_api_hash).get_client()
     try:
         await account.get_dialogs()
         channel = await account.get_input_entity(comment_data.channel_id)
@@ -170,8 +179,11 @@ async def comment_message(comment_data: CommentMessageModel,
              description="Like message with emoticon"
              )
 async def like_message(like_data: LikeMessageModel, user: Union[UserDbModel, None] = Depends(get_user)) -> LikeMessageModelResponse:
-    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
+    session = SessionDbModel.model_validate(await db.get_session_by_id(user.user_session_id))
+    account = await TelegramAccount(session_file_name=session.session_file_name,
+                                    app_id=session.telegram_api_id,
+                                    app_hash=session.telegram_api_hash).get_client()
     try:
         await account.get_dialogs()
         item = await account.get_entity(like_data.chat_id)
@@ -201,8 +213,11 @@ async def like_message(like_data: LikeMessageModel, user: Union[UserDbModel, Non
              description="Enable/disable/change two-factor authentication"
              )
 async def enable_2fa(twofa_data: TwoFAModel, user: Union[UserDbModel, None] = Depends(get_user)) -> TwoFAModelResponse:
-    account = await TelegramAccount(session_file_name=user.user_session).get_client()
     db = AsyncMongoClient()
+    session = SessionDbModel.model_validate(await db.get_session_by_id(user.user_session_id))
+    account = await TelegramAccount(session_file_name=session.session_file_name,
+                                    app_id=session.telegram_api_id,
+                                    app_hash=session.telegram_api_hash).get_client()
     try:
         result = await account.edit_2fa(current_password=twofa_data.current_password, new_password=twofa_data.new_password)
         action = ActionsDbModel(
@@ -257,7 +272,11 @@ async def get_history(offset: int = 0, limit: int = 10,
             description="Get full information of session dialogs"
             )
 async def get_dialogs(user: Union[UserDbModel, None] = Depends(get_user)):
-    account = await TelegramAccount(session_file_name=user.user_session).get_client()
+    db = AsyncMongoClient()
+    session = SessionDbModel.model_validate(await db.get_session_by_id(user.user_session_id))
+    account = await TelegramAccount(session_file_name=session.session_file_name,
+                                    app_id=session.telegram_api_id,
+                                    app_hash=session.telegram_api_hash).get_client()
     dialogs_data = str(await account.get_dialogs())
     await account.disconnect()
     return dialogs_data

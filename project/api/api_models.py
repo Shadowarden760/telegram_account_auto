@@ -68,7 +68,7 @@ class GetHistoryModelResponse(BaseModel):
 class AdminInsertUserModel(BaseModel):
     new_username: str = Field(description="new username")
     new_user_password: str = Field(description="new password")
-    new_user_session: str = Field(description="user session")
+    new_user_session_id: str = Field(description="user session id")
     new_user_description: str = Field(description="new description", default="default operator")
     new_user_role: UserRoles = Field(description="new user role", default=UserRoles.operator)
     new_user_active: bool = Field(description="if user active or disabled", default=True)
@@ -76,10 +76,21 @@ class AdminInsertUserModel(BaseModel):
 class AdminUpdateUserModel(BaseModel):
     updated_username: Optional[str] = Field(description="updated username", default=None)
     updated_user_password: Optional[str] = Field(description="updated password", default=None)
-    updated_user_session: Optional[str] = Field(description="updated user session path", default=None)
+    updated_user_session_id: Optional[str] = Field(description="updated user session id", default=None)
     updated_user_description: Optional[str] = Field(description="updated description", default=None)
     updated_user_role: Optional[UserRoles] = Field(description="updated user role", default=None)
     updated_user_active: Optional[bool] = Field(description="if user active or disabled", default=None)
+
+class AdminSessionModel(BaseModel):
+    telegram_api_id: int = Field(description="telegram api id")
+    telegram_api_hash: str = Field(description="telegram api hash")
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_to_json(cls, value):
+        if isinstance(value, str):
+            return cls(**json.loads(value))
+        return value
 
 class AdminActionResponse(BaseModel):
     status: StatusEnum = Field(description="operation status")
